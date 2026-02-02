@@ -1,27 +1,39 @@
-name: My Daily API Health Check
+name: Daily API Automation Suite
 
-# This tells the robot WHEN to wake up
 on:
   push:
-    branches: [ "main" ]  # Wake up if I upload new files
+    branches: [ "main" ]
   schedule:
-    - cron: '0 9 * * *'    # Wake up every day at 9:00 AM automatically
+    - cron: '0 9 * * *' # Runs every day at 9:00 AM
 
-# This tells the robot WHAT to do
 jobs:
-  run-newman-tests:
-    runs-on: ubuntu-latest # Use a virtual Linux computer
+  test-api:
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Get my files from GitHub
-        uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Install Node.js (Needed for Newman)
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
-      - name: Install Newman and HTML Reporter
+      - name: Install Newman and Reporter
         run: npm install -g newman newman-reporter-htmlextra
 
-      - name: Execute my Tests
-        run: newman run Demo_User.json -e my_env.json -r cli,htmlextra
+      - name: Execute API Tests
+        # Note: We use quotes because the filenames have dots and underscores
+        run: |
+          newman run "Demo_User.postman_collection.json" \
+          -e "JSON_Placeholder_Live.postman_environment.json" \
+          -r cli,htmlextra \
+          --reporter-htmlextra-export results/report.html
+
+      - name: Save HTML Report
+        # This step saves the report so you can download it from the GitHub UI
+        uses: actions/upload-artifact@v4
+        if: always() # This ensures the report is saved even if a test fails
+        with:
+          name: api-test-report
+          path: results/report.html
