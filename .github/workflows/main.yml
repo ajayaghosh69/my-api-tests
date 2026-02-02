@@ -1,0 +1,27 @@
+name: My Daily API Health Check
+
+# This tells the robot WHEN to wake up
+on:
+  push:
+    branches: [ "main" ]  # Wake up if I upload new files
+  schedule:
+    - cron: '0 9 * * *'    # Wake up every day at 9:00 AM automatically
+
+# This tells the robot WHAT to do
+jobs:
+  run-newman-tests:
+    runs-on: ubuntu-latest # Use a virtual Linux computer
+    steps:
+      - name: Get my files from GitHub
+        uses: actions/checkout@v3
+
+      - name: Install Node.js (Needed for Newman)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Newman and HTML Reporter
+        run: npm install -g newman newman-reporter-htmlextra
+
+      - name: Execute my Tests
+        run: newman run Demo_User.json -e my_env.json -r cli,htmlextra
